@@ -16,7 +16,7 @@ export function SearchBox() {
   const [cursor, setCursor] = useState(0);
 
   const items = useMemo(
-    () => navFor(user).flatMap((g) => g.items),
+    () => user ? navFor(user).flatMap((g) => g.items) : [],
     [user],
   );
   const results = q.trim() ? items.filter((i) => i.label.toLowerCase().includes(q.trim().toLowerCase())) : items;

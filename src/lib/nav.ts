@@ -1,5 +1,5 @@
 import {
-  CreditCard, Home, type LucideIcon, Mail, Receipt, Repeat, User, UserCog, Users,
+  CreditCard, Home, type LucideIcon, Mail, Receipt, Repeat, User, UserCog, Users, FileText, Package, Contact,
 } from "lucide-react";
 import type { Role, SessionUser } from "@/lib/auth/portals";
 
@@ -28,6 +28,7 @@ const team = (role: "admin" | "staff"): NavGroup[] => [
     label: "Sales",
     items: [
       item(role, "customers", role === "staff" ? "My customers" : "Customers", Users, "customers"),
+      item(role, "quotations", "Quotations", FileText, "quotations"),
       item(role, "subscriptions", "Subscriptions", Repeat, "subscriptions"),
     ],
   },
@@ -40,7 +41,7 @@ const team = (role: "admin" | "staff"): NavGroup[] => [
 const NAV: Record<Role, NavGroup[]> = {
   admin: [
     ...team("admin"),
-    { label: "Administration", items: [item("admin", "staff", "Staff", UserCog), item("admin", "messages", "Contact messages", Mail)] },
+    { label: "Administration", items: [item("admin", "catalog", "Products and plans", Package), item("admin", "staff", "Staff", UserCog), item("admin", "reports", "Reports", Mail), item("admin", "settings", "Settings", User)] },
     { label: "Account", items: [item("admin", "profile", "Profile", User)] },
   ],
   staff: [...team("staff"), { label: "Account", items: [item("staff", "profile", "Profile", User)] }],
@@ -49,9 +50,12 @@ const NAV: Record<Role, NavGroup[]> = {
     {
       label: "My account",
       items: [
+        item("customer", "catalog", "Browse plans", Package),
         item("customer", "subscriptions", "My subscriptions", Repeat),
+        item("customer", "quotations", "My quotations", FileText),
         item("customer", "invoices", "My invoices", Receipt),
         item("customer", "payments", "My payments", CreditCard),
+        item("customer", "billing", "Billing details", Contact),
         item("customer", "profile", "Profile", User),
       ],
     },

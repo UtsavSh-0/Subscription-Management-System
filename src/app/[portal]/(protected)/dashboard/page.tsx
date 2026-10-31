@@ -1,3 +1,4 @@
+/*
 import type { Metadata } from "next";
 import { CalendarClock, FileClock, FileText, UserCog, Users } from "lucide-react";
 import { CustomerDashboard } from "@/components/dashboard/customer-dashboard";
@@ -6,6 +7,8 @@ import { KpiCard } from "@/components/shared/kpi-card";
 import { requireRole } from "@/lib/auth/session";
 import type { Role } from "@/lib/auth/portals";
 import { countOf } from "@/lib/data/load";
+import { loadAppData } from "@/lib/data/load";
+import { AppStoreProvider } from "@/store/app-store";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -13,7 +16,10 @@ export default async function DashboardPage({ params }: { params: Promise<{ port
   const portal = (await params).portal as Role;
   const user = await requireRole(portal);
 
-  if (portal === "customer") return <CustomerDashboard name={user.name} />;
+  if (portal === "customer") {
+    const data = await loadAppData();
+    return <AppStoreProvider user={user} data={data}><CustomerDashboard name={user.name} /></AppStoreProvider>;
+  }
 
   const pendingQuotes = await countOf("quotations", (q) => q.in("status", ["draft", "quotation"]));
   if (portal === "admin") {
@@ -46,3 +52,6 @@ export default async function DashboardPage({ params }: { params: Promise<{ port
     />
   );
 }
+*/
+import { DemoWorkspace } from "@/components/demo/demo-workspace";
+export default function DashboardPage() { return <DemoWorkspace section="dashboard" />; }

@@ -15,11 +15,14 @@ export function ContactForm() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    if (v.message.trim().length < 10) return setError("Please add a little more detail.");
     setBusy(true);
-    const res = await fetch("/api/contact", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(v) });
-    const body = await res.json().catch(() => ({}));
+    try {
+      const key = "brightloop.demo.contact.v1";
+      const messages = JSON.parse(localStorage.getItem(key) ?? "[]");
+      localStorage.setItem(key, JSON.stringify([{ ...v, createdAt: new Date().toISOString() }, ...messages]));
+    } catch { setBusy(false); return setError("Your browser could not save this demo message."); }
     setBusy(false);
-    if (!res.ok) return setError(body?.error?.message ?? "Could not send your message. Please try again.");
     setDone(true);
   }
 
@@ -28,7 +31,7 @@ export function ContactForm() {
       <div className="grid place-items-center rounded-2xl border bg-card p-10 text-center shadow-card">
         <CheckCircle2 className="size-10 text-success" />
         <h3 className="mt-3 font-semibold">Message sent</h3>
-        <p className="mt-1 text-sm text-muted-foreground">Thanks, we will get back to you by email.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Your message was saved in this browser’s demo data.</p>
       </div>
     );
   return (

@@ -1,5 +1,5 @@
 export type Period = "daily" | "weekly" | "monthly" | "yearly";
-export type SubscriptionStatus = "draft" | "quotation" | "confirmed" | "active" | "closed";
+export type SubscriptionStatus = "draft" | "quotation" | "confirmed" | "active" | "paused" | "closed";
 export type InvoiceStatus = "draft" | "confirmed" | "paid" | "cancelled";
 export type PaymentMethod = "Card" | "Bank transfer" | "UPI" | "Cheque";
 
@@ -9,6 +9,13 @@ export interface Customer {
   company: string;
   email: string;
   createdAt: string;
+  assignedStaffId?: string;
+  phone?: string;
+  address?: string;
+  billingName?: string;
+  billingAddress?: string;
+  taxId?: string;
+  archived?: boolean;
 }
 
 export interface Plan {
@@ -23,6 +30,7 @@ export interface Plan {
   allowEarlyClose: boolean;
   allowPause: boolean;
   allowRenew: boolean;
+  archived?: boolean;
 }
 
 export interface Subscription {
@@ -37,6 +45,8 @@ export interface Subscription {
   startDate: string;
   expiryDate: string;
   paymentTerms: string;
+  request?: "renewal" | "upgrade" | "downgrade" | "cancellation";
+  requestedPlanId?: string;
 }
 
 export interface Invoice {
@@ -47,6 +57,7 @@ export interface Invoice {
   issueDate: string;
   dueDate: string;
   subtotal: number;
+  discount?: number;
   tax: number;
   total: number;
   status: InvoiceStatus;
@@ -62,10 +73,19 @@ export interface Payment {
   note: string;
 }
 
+export interface DemoProduct { id: string; name: string; price: number; category: string; variant?: string; variants?: string[]; archived?: boolean }
+export interface DemoQuotation { id: string; number: string; customerId: string; planId: string; items: { productId: string; variant?: string; quantity: number }[]; status: "draft" | "sent" | "accepted" | "rejected"; validUntil: string; subtotal?: number; total: number }
+export interface DemoQuotationTemplate { id: string; name: string; planId: string; productId: string; variant?: string; quantity: number; items?: { productId: string; variant?: string; quantity: number }[]; archived?: boolean }
+export interface DemoBillingSettings { taxRate: number; discountRate: number }
+
 export interface AppData {
   customers: Customer[];
   plans: Plan[];
   subscriptions: Subscription[];
   invoices: Invoice[];
   payments: Payment[];
+  products?: DemoProduct[];
+  quotations?: DemoQuotation[];
+  quotationTemplates?: DemoQuotationTemplate[];
+  billingSettings?: DemoBillingSettings;
 }

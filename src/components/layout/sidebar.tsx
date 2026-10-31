@@ -18,7 +18,7 @@ interface Props {
 export function Sidebar({ collapsed, onToggle, mobileOpen, onClose }: Props) {
   const pathname = usePathname();
   const { user } = useAppStore();
-  const groups = navFor(user);
+  const groups = user ? navFor(user) : [];
   const hide = collapsed ? "lg:hidden" : "";
 
   return (
@@ -27,17 +27,17 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onClose }: Props) {
       <aside
         aria-label="Primary"
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex w-[252px] flex-col border-r bg-card transition-[width,transform] duration-200",
+          "app-navigation fixed inset-y-0 left-0 z-40 flex w-[252px] flex-col border-r bg-card transition-[width,transform] duration-200",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
           "lg:translate-x-0",
           collapsed ? "lg:w-[72px]" : "lg:w-[252px]",
         )}
       >
-        <div className={cn("flex h-16 items-center gap-2.5 bg-gradient-to-r from-primary to-primary/80 px-4 text-primary-foreground", collapsed && "lg:justify-center lg:px-0")}>
-          <Logo className="size-8 rounded-lg ring-2 ring-white/30" />
+        <div className={cn("flex h-16 items-center gap-2.5 border-b px-4 text-foreground", collapsed && "lg:justify-center lg:px-0")}>
+          <Logo className="size-8 rounded-lg ring-2 ring-primary/20" />
           <span className={cn("leading-tight", hide)}>
             <span className="block text-[15px] font-semibold tracking-tight">Brightloop</span>
-            <span className="block text-[11px] uppercase tracking-wider text-primary-foreground/75">{ROLE_LABEL[user.role]} portal</span>
+            <span className="block text-[11px] uppercase tracking-wider text-muted-foreground">{ROLE_LABEL[user?.role ?? "admin"]} portal</span>
           </span>
           <button onClick={onClose} className="ml-auto grid size-8 place-items-center rounded-md hover:bg-white/15 lg:hidden" aria-label="Close menu">
             <X className="size-4" />

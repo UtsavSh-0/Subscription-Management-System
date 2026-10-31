@@ -6,6 +6,7 @@ import type { SubscriptionStatus } from "@/types";
 
 const LABEL: Record<SubscriptionStatus, string> = {
   active: "Active",
+  paused: "Paused",
   confirmed: "Confirmed",
   quotation: "Quotation",
   draft: "Draft",

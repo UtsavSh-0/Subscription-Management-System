@@ -1,35 +1,39 @@
-# Brightloop: Subscription Management
+﻿# Brightloop local demo
 
-Next.js 15 (App Router) · TypeScript · Tailwind · Supabase (Auth + Postgres + RLS) · Recharts
+Brightloop is a self-contained subscription workflow demonstration built with Next.js 15, TypeScript, Tailwind CSS and Recharts. It uses browser localStorage for demo records and sessions. It needs no external database, authentication service, API key, or environment variable.
 
-## Portals and routes
-| Route | Who | Notes |
+## Run locally
+
+    npm install
+    npm run dev
+
+Open http://localhost:3000. The production build commands are npm run build, npm run lint, and npm run typecheck.
+
+## Demo logins
+
+| Portal | Email | Password |
 |---|---|---|
-| `/` | Public | Landing page, contact form |
-| `/admin/login`, `/staff/login`, `/customer/login` | Each role | Wrong-role sign-ins are rejected and signed out |
-| `/customer/register` | Public | Creates **customers only**. `/admin/register` and `/staff/register` return 404 |
-| `/{portal}/forgot-password`, `/{portal}/reset-password` | Each role | Email link lands on `/auth/callback` |
-| `/{portal}/dashboard`, `/profile` | Signed-in role | Real data under RLS |
-| `/admin/*`, `/staff/*` | customers, subscriptions, invoices, payments (read) | Staff see assigned customers only |
-| `/admin/staff`, `/admin/messages` | Admin | Invite staff, edit permissions, contact inbox |
-| `/customer/subscriptions`, `/invoices`, `/payments` | Customer | Own records only |
+| Admin | admin@brightloop.demo | AdminDemo@123 |
+| Staff | staff@brightloop.demo | StaffDemo@123 |
+| Customer | customer@brightloop.demo | CustomerDemo@123 |
 
-## Security model
-1. `middleware.ts` refreshes the session and sends signed-out visitors to the matching login.
-2. `(protected)/layout.tsx` reads the role **from the `profiles` table** and redirects to the user's own dashboard if it does not match the portal.
-3. Row Level Security is the final authority (see `supabase/migrations`). Staff reach a customer's records only if the customer is assigned to them AND they hold the module permission.
+These are presentation credentials only. Passwords and records are kept in browser storage and can be inspected or changed by the browser user. This is not production authentication or a secure multi-user backend. Use synthetic information only. Payments are demo ledger entries; no money is processed. Email delivery is not configured. Invoices can be printed or saved as PDF through the browser.
 
-## Setup
-1. `npm install`, copy `.env.example` to `.env.local`, fill it in.
-2. Apply `supabase/migrations/0001` to `0005` in order (see `supabase/README.md`), then create the first admin.
-3. Auth > URL Configuration: Site URL = `NEXT_PUBLIC_APP_URL`; add `<APP_URL>/auth/callback` to Redirect URLs.
-4. `npm run dev`, then check `/api/health`.
-5. Checks: `npm run typecheck`, `npm run lint`, `npm run build`.
+## Try the complete workflow
 
-## Deploy (Vercel or any Node host)
-Set the five env vars above on the host (service-role key as a server-only secret), set `NEXT_PUBLIC_APP_URL` to the production URL, add that URL to Supabase Redirect URLs, then deploy. For production email, configure custom SMTP in Supabase (the default sender is heavily rate-limited).
+1. Sign in as Admin and add a product and plan in Products and plans.
+2. Open Customers and assign a customer to Avery Morgan (demo Staff).
+3. Sign in as Staff, create a quotation for that assigned customer, and choose a product, plan, or quotation template.
+4. Sign in as that Customer and accept the quotation. Brightloop creates a subscription and invoice.
+5. Return to Staff or Admin and record a payment on the invoice.
+6. Reopen the dashboard to see revenue and invoice totals update.
+7. In Admin, use Subscriptions → Run recurring billing to generate due invoices. Repeating the run will not create a second invoice for the same subscription date.
+8. In Admin settings, reset demo data to restore the original sample dataset.
 
-Optional Supabase-backed demo accounts are documented in [supabase/README.md](supabase/README.md#demo-accounts). Keep demo passwords in server-only deployment secrets; set `DEMO_ACCESS_ENABLED=false` in production to hide demo access.
+Admin and Staff demo views are separated by portal and assigned-customer filters. Customers see associated records in the interface. Because the complete dataset is client-side, these filters are demonstration behavior, not an authorization boundary.
 
-## Not built yet
-Create/edit forms and workflows for products, plans, taxes, discounts, quotations, subscriptions, invoices (incl. PDF) and payments; the recurring billing job; reports; system settings UI; customer plan browsing/compare/subscribe, requests and support desk UI. The database tables for requests, support and settings already exist (migration 0004).
+## Demo data and storage
+
+The first visit initializes sample customers, products, plans, subscriptions, quotations, invoices, payments, and quotation templates. Changes persist in that browser. Clearing browser site data also clears the demo workspace. The Admin settings page can reset the data and additional demo accounts.
+
+No Supabase configuration is used. .env.example is retained as an informational note; no .env file is required.

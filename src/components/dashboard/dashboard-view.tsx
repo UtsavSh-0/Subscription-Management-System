@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, ArrowDownRight, ArrowUpRight, Banknote, Hourglass, RefreshCw, Repeat } from "lucide-react";
 import { toast } from "sonner";
@@ -14,27 +14,29 @@ import { KpiCard } from "@/components/shared/kpi-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getKpis, overdueInvoices, recentActivity, recentPayments, revenueSeries, statusBreakdown } from "@/lib/analytics";
+import type { Activity, ActivityKind } from "@/lib/analytics";
 import { cn, formatMoney } from "@/lib/utils";
-import { useAppStore } from "@/store/app-store";
 
 const RANGES = [3, 6, 12] as const;
 
 export function DashboardView({ title = "Overview", description = "Recurring revenue, billing and collections across Brightloop.", extra }: { title?: string; description?: string; extra?: ReactNode }) {
-  const { data } = useAppStore();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const reload = () => { setLoading(true); router.refresh(); setTimeout(() => setLoading(false), 600); };
   const [range, setRange] = useState<(typeof RANGES)[number]>(6);
-
-  const kpis = useMemo(() => getKpis(data), [data]);
-  const series = useMemo(() => revenueSeries(data, range), [data, range]);
-  const breakdown = useMemo(() => statusBreakdown(data), [data]);
-  const payments = useMemo(() => recentPayments(data, 6), [data]);
-  const overdue = useMemo(() => overdueInvoices(data, 6), [data]);
-  const activity = useMemo(() => recentActivity(data, 7), [data]);
-
-  const delta = kpis.collectedDelta;
+  const [summary, setSummary] = useState<any>(null);
+  useEffect(() => {
+    let live = true;
+    fetch(`/api/dashboard?months=${range}`, { cache: "no-store" }).then(r => r.ok ? r.json() : Promise.reject()).then(v => { if (live) setSummary(v); }).catch(() => { if (live) setSummary(null); });
+    return () => { live = false; };
+  }, [range]);
+  const kpis = summary?.kpis ?? { active_count: 0, started_this_month: 0, mrr: 0, collected_this_month: 0, collected_last_month: 0, outstanding: 0, open_count: 0, overdue_count: 0, overdue_amount: 0 };
+  const delta = Number(kpis.collected_last_month) > 0 ? (Number(kpis.collected_this_month)-Number(kpis.collected_last_month))/Number(kpis.collected_last_month) : null;
+  const series = useMemo(() => (summary?.series ?? []).map((p: any) => { const date = new Date(`${p.month}-01T00:00:00Z`); return { ...p, billed: Number(p.billed), collected: Number(p.collected), label: new Intl.DateTimeFormat("en-IN", { month: "short", timeZone: "UTC" }).format(date), full: new Intl.DateTimeFormat("en-IN", { month: "long", year: "numeric", timeZone: "UTC" }).format(date) }; }), [summary]);
+  const breakdown = summary?.breakdown ?? [];
+  const payments = (summary?.payments ?? []).map((p: any) => ({ id:p.id, method:p.method, amount:Number(p.amount), date:p.paid_on, customer:{company:p.customer}, invoice:{number:p.invoice} }));
+  const overdue = (summary?.overdue ?? []).map((i:any) => ({ id:i.id, number:i.number, dueDate:i.due_date, total:Number(i.total)-Number(i.amount_paid), daysOverdue:Math.max(0,Math.floor((Date.now()-new Date(`${i.due_date}T00:00:00`).getTime())/86400000)), customer:{company:i.customer} }));
+  const activity: Activity[] = (summary?.activity ?? []).map((a:any) => ({...a, kind: (a.kind === "invoice" ? "invoice" : "payment") as ActivityKind}));
 
   return (
     <>
@@ -62,18 +64,18 @@ export function DashboardView({ title = "Overview", description = "Recurring rev
           <section aria-label="Key metrics" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <KpiCard
               label="Active subscriptions"
-              value={String(kpis.activeCount)}
+              value={String(kpis.active_count)}
               icon={Repeat}
               footer={
                 <>
-                  {kpis.startedThisMonth > 0 ? `${kpis.startedThisMonth} started this month` : "No new starts this month"}
-                  <span className="block">{formatMoney(kpis.mrr, true)} monthly recurring</span>
+                  {kpis.started_this_month > 0 ? `${kpis.started_this_month} started this month` : "No new starts this month"}
+                  <span className="block">{formatMoney(Number(kpis.mrr), true)} monthly recurring</span>
                 </>
               }
             />
             <KpiCard
               label="Collected this month"
-              value={formatMoney(kpis.collectedThisMonth)}
+              value={formatMoney(Number(kpis.collected_this_month))}
               icon={Banknote}
               footer={
                 delta === null ? (
@@ -91,16 +93,16 @@ export function DashboardView({ title = "Overview", description = "Recurring rev
             />
             <KpiCard
               label="Outstanding"
-              value={formatMoney(kpis.outstanding)}
+              value={formatMoney(Number(kpis.outstanding))}
               icon={Hourglass}
-              footer={`${kpis.openCount} open ${kpis.openCount === 1 ? "invoice" : "invoices"}`}
+              footer={`${kpis.open_count} open ${kpis.open_count === 1 ? "invoice" : "invoices"}`}
             />
             <KpiCard
               label="Overdue invoices"
-              value={String(kpis.overdueCount)}
+              value={String(kpis.overdue_count)}
               icon={AlertTriangle}
               tone="danger"
-              footer={`${formatMoney(kpis.overdueAmount)} past due`}
+              footer={`${formatMoney(Number(kpis.overdue_amount))} past due`}
             />
           </section>
 
@@ -148,7 +150,7 @@ export function DashboardView({ title = "Overview", description = "Recurring rev
                 </div>
               </CardHeader>
               <CardContent>
-                <StatusDonut data={breakdown} />
+            <StatusDonut data={breakdown} />
               </CardContent>
             </Card>
           </section>
@@ -181,7 +183,7 @@ export function DashboardView({ title = "Overview", description = "Recurring rev
                 <CardTitle>Overdue invoices</CardTitle>
                 <CardDescription>Open invoices past their due date, longest overdue first.</CardDescription>
               </div>
-              {kpis.overdueCount > 0 && <Badge variant="danger">{kpis.overdueCount} overdue</Badge>}
+              {kpis.overdue_count > 0 && <Badge variant="danger">{kpis.overdue_count} overdue</Badge>}
             </CardHeader>
             <OverdueTable rows={overdue} />
           </Card>

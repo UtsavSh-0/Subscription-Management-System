@@ -29,7 +29,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-background" data-portal={pathname.startsWith("/staff") ? "staff" : pathname.startsWith("/customer") ? "customer" : "admin"}>
       <a
         href="#main"
         className="sr-only z-50 rounded-md bg-card px-3 py-2 shadow-pop focus:not-sr-only focus:fixed focus:left-4 focus:top-4"

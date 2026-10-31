@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { PageHeader } from "@/components/layout/page-header";
+import { ListPagination } from "@/components/shared/list-pagination";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -10,10 +11,11 @@ export type Row = { id: string } & Record<string, ReactNode>;
 
 /** Responsive data table inside a page header. Rows are plain server-rendered cells. */
 export function ListPage({
-  title, description, icon, columns, rows, emptyTitle, emptyText, actions, above,
+  title, description, icon, columns, rows, emptyTitle, emptyText, actions, above, page, hasNext,
 }: {
   title: string; description: string; icon: LucideIcon; columns: Column[]; rows: Row[];
   emptyTitle: string; emptyText: string; actions?: ReactNode; above?: ReactNode;
+  page?: number; hasNext?: boolean;
 }) {
   return (
     <>
@@ -39,6 +41,7 @@ export function ListPage({
           </div>
         )}
       </Card>
+      {page !== undefined && <ListPagination page={page} hasNext={Boolean(hasNext)} />}
     </>
   );
 }

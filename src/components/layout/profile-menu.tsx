@@ -9,20 +9,20 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { ROLE_LABEL } from "@/lib/nav";
-import { createClient } from "@/lib/supabase/client";
 import { initials } from "@/lib/utils";
 import { useAppStore } from "@/store/app-store";
 
 export function ProfileMenu() {
-  const { user } = useAppStore();
+  const { user, logout } = useAppStore();
   const router = useRouter();
 
   async function signOut() {
-    const { error } = await createClient().auth.signOut();
-    if (error) return toast.error("Could not sign out. Please try again.");
+    if (!user) return;
+    logout();
     router.replace(`/${user.role}/login`);
-    router.refresh();
   }
+
+  if (!user) return null;
 
   return (
     <DropdownMenu>

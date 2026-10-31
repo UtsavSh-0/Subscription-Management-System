@@ -7,7 +7,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/input";
 import { homeFor, isRole, ROLE_LABEL, ROLES, type Role } from "@/lib/auth/portals";
-import { createClient } from "@/lib/supabase/client";
+import { useAppStore } from "@/store/app-store";
 
 export function LoginForm({ portal, notice, demoCredentials }: { portal: Role; notice?: string; demoCredentials?: { email: string; password: string } }) {
   const router = useRouter();
@@ -15,28 +15,16 @@ export function LoginForm({ portal, notice, demoCredentials }: { portal: Role; n
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { login, hydrated } = useAppStore();
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
     if (!email.trim() || !password) return setError("Enter your email and password.");
     setBusy(true);
-    const supabase = createClient();
-    const { data, error: authError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-    if (authError || !data.user) {
-      setBusy(false);
-      return setError(authError?.message.toLowerCase().includes("confirm") ? "Confirm your email first. Check your inbox for the link." : "Invalid email or password.");
-    }
-    // The portal is decided by the role stored in the database, not by anything the browser sends.
-    const { data: profile } = await supabase.from("profiles").select("role").eq("id", data.user.id).maybeSingle();
-    const role = profile?.role as string | undefined;
-    if (!isRole(role) || role !== portal) {
-      await supabase.auth.signOut();
-      setBusy(false);
-      return setError(isRole(role) ? `This is the ${ROLE_LABEL[portal]} login. Your account belongs to the ${ROLE_LABEL[role]} portal.` : "Your account has no access to this portal.");
-    }
+    const message = login(email, password, portal);
+    if (message) { setBusy(false); return setError(message); }
     router.replace(homeFor(portal));
-    router.refresh();
   }
 
   return (
@@ -57,7 +45,7 @@ export function LoginForm({ portal, notice, demoCredentials }: { portal: Role; n
         <Input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
       </Field>
       {error && <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
-      <Button type="submit" size="lg" className="w-full" disabled={busy}>
+      <Button type="submit" size="lg" className="w-full" disabled={busy || !hydrated}>
         {busy && <Loader2 className="animate-spin" />} Sign in
       </Button>
       <div className="flex items-center justify-between text-sm">

@@ -12,11 +12,23 @@ const addMonths = (iso: string, n: number) => {
   d.setUTCMonth(d.getUTCMonth() + n);
   return d.toISOString().slice(0, 10);
 };
+const addPeriod = (iso: string, n: number, period: Plan["period"]) => {
+  const date = new Date(`${iso}T00:00:00Z`);
+  if (period === "daily") return addDays(iso, n);
+  if (period === "weekly") return addDays(iso, n * 7);
+  const day = date.getUTCDate();
+  const month = date.getUTCMonth() + (period === "monthly" ? n : 0);
+  const year = date.getUTCFullYear() + (period === "yearly" ? n : 0);
+  const first = new Date(Date.UTC(year, month, 1));
+  const lastDay = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0)).getUTCDate();
+  first.setUTCDate(Math.min(day, lastDay));
+  return first.toISOString().slice(0, 10);
+};
 const startOn = (monthsAgo: number, day: number) =>
   `${addMonths(`${REF_DATE.slice(0, 7)}-01`, -monthsAgo).slice(0, 8)}${String(day).padStart(2, "0")}`;
 
 const people: [string, string, string][] = [
-  ["Meera Kapoor", "Northwind Traders", "meera@northwindtraders.in"],
+  ["Meera Kapoor", "Northwind Traders", "customer@brightloop.demo"],
   ["Arjun Rao", "Kestrel Logistics", "arjun@kestrellogistics.com"],
   ["Sana Qureshi", "Lumen Health", "sana@lumenhealth.in"],
   ["Vikram Shah", "Orbit Retail", "vikram@orbitretail.co"],
@@ -26,6 +38,14 @@ const people: [string, string, string][] = [
   ["Kabir Sethi", "Tandem Labs", "kabir@tandemlabs.io"],
   ["Anaya Joshi", "Bluebird Academy", "anaya@bluebirdacademy.in"],
   ["Rahul Bansal", "Ironwood Works", "rahul@ironwoodworks.com"],
+  ["Tara Sood", "Maple & Main", "tara@mapleandmain.in"],
+  ["Rohan Kulkarni", "Cedar Mobility", "rohan@cedarmobility.in"],
+  ["Aditi Sen", "Pixel Orchard", "aditi@pixelorchard.in"],
+  ["Neil Fernandes", "Summit Learning", "neil@summitlearning.in"],
+  ["Pooja Nair", "Silverline Care", "pooja@silverlinecare.in"],
+  ["Kunal Mehta", "Freshfield Supply", "kunal@freshfieldsupply.in"],
+  ["Zoya Mirza", "Beacon Creative", "zoya@beaconcreative.in"],
+  ["Aarav Desai", "Westbridge Services", "aarav@westbridgeservices.in"],
 ];
 
 const customers: Customer[] = people.map(([name, company, email], i) => ({
@@ -34,6 +54,7 @@ const customers: Customer[] = people.map(([name, company, email], i) => ({
   company,
   email,
   createdAt: addMonths(REF_DATE, -14 + i),
+  assignedStaffId: "demo-staff",
 }));
 
 const plan = (id: string, name: string, price: number, period: Plan["period"], minQuantity: number, pause: boolean): Plan => ({
@@ -56,6 +77,9 @@ const plans: Plan[] = [
   plan("plan-business-y", "Business annual", 79990, "yearly", 5, false),
   plan("plan-enterprise-y", "Enterprise annual", 249900, "yearly", 1, false),
   plan("plan-analytics", "Analytics add-on", 999, "monthly", 1, true),
+  plan("plan-daily", "Daily service", 199, "daily", 1, true),
+  plan("plan-weekly", "Weekly support", 899, "weekly", 1, true),
+  plan("plan-operations", "Operations monthly", 21900, "monthly", 3, true),
 ];
 
 // [customer, plan, status, months ago started, quantity, billing day]
@@ -76,6 +100,16 @@ const spec: [number, number, SubscriptionStatus, number, number, number][] = [
   [5, 1, "quotation", 0, 3, 0],
   [6, 2, "confirmed", 0, 6, 0],
   [8, 3, "draft", 0, 1, 0],
+  [2, 5, "active", 1, 2, 20],
+  [4, 6, "active", 2, 1, 16],
+  [10, 1, "active", 7, 3, 5],
+  [11, 0, "active", 9, 2, 11],
+  [12, 2, "active", 13, 1, 20],
+  [13, 4, "closed", 10, 4, 9],
+  [14, 1, "active", 3, 5, 14],
+  [15, 0, "active", 5, 2, 19],
+  [16, 3, "active", 8, 1, 8],
+  [17, 4, "active", 2, 3, 24],
 ];
 
 type PendingInvoice = Omit<Invoice, "id" | "number">;
@@ -103,14 +137,13 @@ spec.forEach(([ci, pi, status, ago, qty, day], idx) => {
   });
   if (notStarted) return;
 
-  const step = yearly ? 12 : 1;
   for (let k = 0; ; k++) {
-    const issue = addMonths(start, k * step);
+    const issue = addPeriod(start, k, p.period);
     if (issue > REF_DATE || issue >= expiry) break;
-    const isLast = addMonths(start, (k + 1) * step) > REF_DATE;
+    const isLast = addPeriod(start, k + 1, p.period) > REF_DATE;
     const open =
       status !== "closed" &&
-      (isLast ? !yearly && [0, 1, 5, 6].includes(idx) : (idx + k) % 5 === 4 && addMonths(issue, 3) > REF_DATE);
+      (isLast ? !yearly && [0, 1, 5, 6].includes(idx) : (idx + k) % 5 === 4 && addPeriod(issue, 3, p.period) > REF_DATE);
     const tax = Math.round(amount * GST);
     pending.push({
       customerId: customers[ci].id,
@@ -147,4 +180,25 @@ pending.forEach((inv, i) => {
   });
 });
 
-export const seedData: AppData = { customers, plans, subscriptions, invoices, payments };
+export const seedData: AppData = {
+  customers, plans, subscriptions, invoices, payments,
+  products: [
+    { id: "prd-core", name: "Brightloop Core", category: "Software", price: 2499, variant: "Standard", variants: ["Standard", "Plus", "Enterprise"] },
+    { id: "prd-analytics", name: "Analytics Suite", category: "Software", price: 999, variant: "Advanced" },
+    { id: "prd-support", name: "Priority Support", category: "Service", price: 1499, variant: "Business hours", variants: ["Business hours", "24/7"] },
+    { id: "prd-onboarding", name: "Guided onboarding", category: "Service", price: 4999, variant: "Remote" },
+    { id: "prd-seats", name: "Additional seats", category: "Software", price: 699, variant: "Per seat", variants: ["Per seat", "Five-seat bundle"] },
+    { id: "prd-api", name: "API access", category: "Software", price: 1899, variant: "Standard" },
+    { id: "prd-training", name: "Team training", category: "Service", price: 3499, variant: "Workshop" },
+    { id: "prd-storage", name: "Secure storage", category: "Software", price: 499, variant: "100 GB", variants: ["100 GB", "500 GB", "1 TB"] },
+  ],
+  quotations: [
+    { id: "quote-001", number: "QT-2026-001", customerId: "cus-1", planId: "plan-business", items: [{ productId: "prd-core", variant: "Standard", quantity: 1 }, { productId: "prd-analytics", variant: "Advanced", quantity: 1 }], status: "sent", validUntil: "2026-12-15", subtotal: 11497, total: 13566 },
+    { id: "quote-002", number: "QT-2026-002", customerId: "cus-2", planId: "plan-starter", items: [{ productId: "prd-core", variant: "Standard", quantity: 1 }], status: "draft", validUntil: "2026-12-20", subtotal: 4998, total: 5898 },
+  ],
+  quotationTemplates: [
+    { id: "template-standard", name: "Standard onboarding", planId: "plan-business", productId: "prd-onboarding", quantity: 1 },
+    { id: "template-starter", name: "Starter package", planId: "plan-starter", productId: "prd-core", quantity: 1 },
+  ],
+  billingSettings: { taxRate: 18, discountRate: 0 },
+};

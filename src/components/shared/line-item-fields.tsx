@@ -1,0 +1,11 @@
+"use client";
+
+import { useState } from "react";
+
+type Product={id:string;name:string;sales_price:number;product_variants?:{id:string;attribute:string;value:string;additional_price:number}[]};
+type Line={product_id:string;variant_id:string;quantity:number};
+export function LineItemFields({products,initial,names={product:"product_id",variant:"variant_id",quantity:"quantity"}}:{products:Product[];initial?:Partial<Line>[];names?:{product:string;variant:string;quantity:string}}){
+ const [lines,setLines]=useState<Line[]>(()=>initial?.length?initial.map(x=>({product_id:x.product_id??products[0]?.id??"",variant_id:x.variant_id??"",quantity:x.quantity??1})): [{product_id:products[0]?.id??"",variant_id:"",quantity:1}]);
+ const update=(index:number,key:keyof Line,value:string)=>setLines(old=>old.map((x,n)=>n===index?{...x,[key]:key==="quantity"?Math.max(1,Number(value)||1):value}:x));
+ return <div className="space-y-2">{lines.map((line,index)=>{const product=products.find(p=>p.id===line.product_id);return <div key={index} className="grid gap-2 rounded border p-2 sm:grid-cols-[2fr_2fr_1fr_auto]"><select required name={names.product} value={line.product_id} onChange={e=>update(index,"product_id",e.target.value)} className="rounded border bg-background p-2">{products.map(p=><option key={p.id} value={p.id}>{p.name} · {Number(p.sales_price).toFixed(2)}</option>)}</select><select name={names.variant} value={line.variant_id} onChange={e=>update(index,"variant_id",e.target.value)} className="rounded border bg-background p-2"><option value="">No variant</option>{(product?.product_variants??[]).map(v=><option key={v.id} value={v.id}>{v.attribute}: {v.value} (+{Number(v.additional_price).toFixed(2)})</option>)}</select><input name={names.quantity} type="number" min="1" required value={line.quantity} onChange={e=>update(index,"quantity",e.target.value)} className="rounded border bg-background p-2" aria-label="Quantity"/>{lines.length>1&&<button type="button" onClick={()=>setLines(old=>old.filter((_,n)=>n!==index))} className="px-2 text-destructive" aria-label="Remove line">Remove</button>}</div>})}<button type="button" onClick={()=>setLines(old=>[...old,{product_id:products[0]?.id??"",variant_id:"",quantity:1}])} className="text-sm text-primary hover:underline">Add product line</button></div>;
+}
