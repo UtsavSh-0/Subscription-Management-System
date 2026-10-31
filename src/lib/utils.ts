@@ -8,7 +8,8 @@ export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));
 const demoRates: Record<DemoCurrency, number> = { INR: 1, USD: 1 / 83, EUR: 1 / 90, GBP: 1 / 105 };
 
 export function formatMoney(value: number, compact = false, currency: DemoCurrency = CURRENCY.code) {
-  return new Intl.NumberFormat(CURRENCY.locale, {
+  const locale = currency === "INR" ? "en-IN" : currency === "USD" ? "en-US" : currency === "EUR" ? "en-IE" : "en-GB";
+  return new Intl.NumberFormat(locale, {
     style: "currency",
     currency,
     maximumFractionDigits: compact ? 1 : 0,

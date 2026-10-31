@@ -182,6 +182,11 @@ pending.forEach((inv, i) => {
 
 export const seedData: AppData = {
   customers, plans, subscriptions, invoices, payments,
+  supportTickets: [
+    { id: "ticket-001", customerId: "cus-1", subject: "Question about my upcoming renewal", category: "Subscription", priority: "Normal", status: "In progress", message: "Could you confirm which plan will renew next month?", response: "Your Business plan is scheduled to renew at the current rate.", createdAt: addDays(REF_DATE, -2) },
+    { id: "ticket-002", customerId: "cus-2", subject: "Invoice payment confirmation", category: "Billing", priority: "High", status: "Open", message: "I have completed the transfer and would like to confirm it was received.", createdAt: addDays(REF_DATE, -1) },
+    { id: "ticket-003", customerId: "cus-4", subject: "Add another team seat", category: "Subscription", priority: "Normal", status: "Resolved", message: "Please share the process to add one seat to our subscription.", response: "You can request a plan update from the subscription page.", createdAt: addDays(REF_DATE, -8) },
+  ],
   paymentFailures: invoices.filter((invoice) => invoice.status === "confirmed").slice(0, 3).map((invoice, index) => ({
     id: `failure-${index + 1}`,
     invoiceId: invoice.id,

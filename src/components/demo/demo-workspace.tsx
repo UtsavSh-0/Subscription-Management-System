@@ -3,10 +3,16 @@
 import { useState, type FormEvent } from "react";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
-import { formatMoney } from "@/lib/utils";
+import { formatMoney as formatCurrency } from "@/lib/utils";
 import { useAppStore } from "@/store/app-store";
 import { DemoLineItems } from "@/components/demo/demo-line-items";
 import { SubscriptionCommandCenter } from "@/components/demo/subscription-command-center";
+import { RoleDashboard } from "@/components/demo/role-dashboard";
+import { SupportCenter } from "@/components/demo/support-center";
+import { RevenueInsights } from "@/components/demo/revenue-insights";
+import { ImportExportCenter } from "@/components/demo/import-export-center";
+import { AuditLog } from "@/components/demo/audit-log";
+import { OperationsSettings } from "@/components/demo/operations-settings";
 import type { DemoProduct, DemoQuotation, Invoice, Plan, Subscription } from "@/types";
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -34,6 +40,7 @@ export function DemoWorkspace({ section: explicitSection }: { section?: string }
   const portal = params.portal ?? "admin";
   const section = explicitSection ?? params.section ?? "dashboard";
   const { data, setData, user, reset, accounts } = useAppStore();
+  const formatMoney = (value: number, compact = false) => formatCurrency(value, compact, data.currency ?? "INR");
   const [revision, setRevision] = useState(0);
   const [billingAsOf, setBillingAsOf] = useState(today());
   const products = data.products ?? [];
@@ -102,6 +109,7 @@ export function DemoWorkspace({ section: explicitSection }: { section?: string }
       setRevision(revision + 1);
       toast.success(`Payment retry recorded for ${invoice.number}.`);
     }} />;
+    if (portal === "staff" || portal === "customer") return <RoleDashboard role={portal} name={user?.name ?? "Brightloop"} customerId={portal === "customer" ? user?.customerId : user?.id} data={data} />;
     return <div className="space-y-6"><header><h1 className="text-2xl font-semibold">{portal === "customer" ? "Welcome back" : portal === "staff" ? "My workspace" : "Dashboard"}</h1><p className="mt-1 text-sm text-muted-foreground">{user?.name} · live demo data saved in this browser</p></header>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{[
         [portal === "customer" ? "My subscriptions" : "Active subscriptions", visibleSubs.filter(x => x.status === "active").length],
@@ -207,10 +215,13 @@ export function DemoWorkspace({ section: explicitSection }: { section?: string }
     case "subscriptions": return subscriptionsPage();
     case "invoices": return invoicesPage();
     case "payments": return paymentsPage();
+    case "support": return <SupportCenter portal={portal as "admin" | "staff" | "customer"} />;
     case "profile": case "billing": return profilePage();
-    case "settings": return portal === "admin" ? settingsPage() : dashboard();
+    case "settings": return portal === "admin" ? <div className="space-y-5"><OperationsSettings />{settingsPage()}</div> : dashboard();
     case "staff": return portal === "admin" ? <AccountsManager /> : dashboard();
-    case "analytics": case "reports": return <div className="space-y-4"><h1 className="text-2xl font-semibold">Revenue analytics</h1><section className={card}>Collected revenue <b className="ml-2">{formatMoney(metrics.revenue)}</b><p className="mt-2 text-sm text-muted-foreground">{metrics.active} active subscriptions · {metrics.open} open invoices · {metrics.overdue} overdue</p></section></div>;
+    case "reports": case "analytics": return portal === "admin" ? <RevenueInsights data={data} /> : dashboard();
+    case "imports": return portal === "admin" ? <ImportExportCenter /> : dashboard();
+    case "audit": return portal === "admin" ? <AuditLog /> : dashboard();
     default: return dashboard();
   }
 }
