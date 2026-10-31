@@ -10,7 +10,7 @@ const USER_KEY = "brightloop.demo.user.v1";
 const ACCOUNTS_KEY = "brightloop.demo.accounts.v1";
 const DEMO_USERS: Record<string, SessionUser> = {
   "admin@brightloop.demo": { id: "demo-admin", email: "admin@brightloop.demo", name: "Brightloop Admin", role: "admin", isDemo: true, viewable: ["customers", "quotations", "subscriptions", "invoices", "payments"] },
-  "staff@brightloop.demo": { id: "demo-staff", email: "staff@brightloop.demo", name: "Avery Morgan", role: "staff", isDemo: true, viewable: ["customers", "quotations", "subscriptions", "invoices", "payments"] },
+  "staff@brightloop.demo": { id: "demo-staff", email: "staff@brightloop.demo", name: "Avery Morgan", role: "staff", isDemo: true, viewable: ["customers", "quotations", "subscriptions", "invoices", "payments", "support"] },
   "customer@brightloop.demo": { id: "cus-1", email: "customer@brightloop.demo", name: "Meera Kapoor", role: "customer", isDemo: true, customerId: "cus-1", viewable: [] },
 };
 const DEMO_PASSWORDS: Record<string, string> = { "admin@brightloop.demo": "AdminDemo@123", "staff@brightloop.demo": "StaffDemo@123", "customer@brightloop.demo": "CustomerDemo@123" };
@@ -34,15 +34,21 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       const email = session ? JSON.parse(session).email : "";
       const fixedUser = DEMO_USERS[email];
       const localUser = accountList.find(account => account.email.toLowerCase() === email.toLowerCase());
-      setUser(fixedUser ?? (localUser ? { id: localUser.id, email: localUser.email, name: localUser.name, role: localUser.role, isDemo: true, customerId: localUser.customerId, viewable: localUser.role === "staff" ? ["customers", "quotations", "subscriptions", "invoices", "payments"] : [] } : null));
+      setUser(fixedUser ?? (localUser ? { id: localUser.id, email: localUser.email, name: localUser.name, role: localUser.role, isDemo: true, customerId: localUser.customerId, viewable: localUser.role === "staff" ? ["customers", "quotations", "subscriptions", "invoices", "payments", "support"] : [] } : null));
     } catch { setDataState(seedData); setUser(null); }
     setHydrated(true);
   }, []);
-  const setData = (next: AppData) => { setDataState(next); try { localStorage.setItem(DATA_KEY, JSON.stringify(next)); } catch {} };
+  const setData = (next: AppData) => {
+    const changed = Object.keys(next).filter((key) => key !== "auditLogs" && (next as unknown as Record<string, unknown>)[key] !== (data as unknown as Record<string, unknown>)[key]);
+    const action = changed.length ? `Updated ${changed.join(", ")}` : "Updated demo workspace";
+    const persisted: AppData = { ...next, auditLogs: [{ id: `audit-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, actor: user?.name ?? "Demo user", action, at: new Date().toISOString() }, ...(next.auditLogs ?? data.auditLogs ?? [])].slice(0, 150) };
+    setDataState(persisted);
+    try { localStorage.setItem(DATA_KEY, JSON.stringify(persisted)); } catch {}
+  };
   const login = (email: string, password: string, portal: SessionUser["role"]) => {
     const key = email.trim().toLowerCase(); const next = DEMO_USERS[key];
     const extra = accounts.find(account => account.email.toLowerCase() === key && account.password === password);
-    const candidate = next && DEMO_PASSWORDS[key] === password ? next : extra ? { id: extra.id, email: extra.email, name: extra.name, role: extra.role, isDemo: true, customerId: extra.customerId, viewable: extra.role === "staff" ? ["customers", "quotations", "subscriptions", "invoices", "payments"] : [] } : null;
+    const candidate = next && DEMO_PASSWORDS[key] === password ? next : extra ? { id: extra.id, email: extra.email, name: extra.name, role: extra.role, isDemo: true, customerId: extra.customerId, viewable: extra.role === "staff" ? ["customers", "quotations", "subscriptions", "invoices", "payments", "support"] : [] } : null;
     if (!candidate) return "Invalid email or password.";
     if (candidate.role !== portal) return `This account belongs to the ${candidate.role} portal.`;
     setUser(candidate); localStorage.setItem(USER_KEY, JSON.stringify({ email: key })); return null;

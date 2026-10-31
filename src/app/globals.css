@@ -38,6 +38,14 @@
 .app-navigation [aria-current="page"] { background: hsl(25 100% 96%); color: hsl(24 90% 43%); }
 .app-topbar { background: hsl(0 0% 100% / .94); backdrop-filter: blur(12px); }
 .app-surface { box-shadow: 0 1px 2px hsl(245 20% 30% / .04), 0 8px 24px -18px hsl(245 25% 30% / .18); }
+.app-navigation a, .app-surface, main table tbody tr { transition: background-color .16s ease, border-color .16s ease, box-shadow .16s ease, transform .16s ease; }
+main h1 { letter-spacing: -.035em; }
+main input, main select, main textarea { border-radius: .7rem; background-color: hsl(var(--card)); transition: border-color .15s ease, box-shadow .15s ease; }
+main input:focus, main select:focus, main textarea:focus { border-color: hsl(var(--primary) / .65); box-shadow: 0 0 0 3px hsl(var(--primary) / .12); outline: none; }
+main table thead { background: hsl(248 30% 98%); }
+main table tbody tr:hover { background: hsl(248 30% 98%); }
+button, a { -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 3px solid hsl(var(--ring) / .45); outline-offset: 2px; }
 .public-hero { color: white; background: radial-gradient(ellipse 68% 60% at 50% -8%, hsl(25 92% 44% / .76), transparent 75%), #0b0b0c; }
 .public-dark { color: white; background: #0b0b0c; }
 .public-dark-muted { color: hsl(0 0% 100% / .64); }

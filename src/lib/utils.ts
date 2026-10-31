@@ -1,16 +1,19 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { CURRENCY, REF_DATE } from "@/lib/config";
+import type { DemoCurrency } from "@/types";
 
 export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));
 
-export function formatMoney(value: number, compact = false) {
+const demoRates: Record<DemoCurrency, number> = { INR: 1, USD: 1 / 83, EUR: 1 / 90, GBP: 1 / 105 };
+
+export function formatMoney(value: number, compact = false, currency: DemoCurrency = CURRENCY.code) {
   return new Intl.NumberFormat(CURRENCY.locale, {
     style: "currency",
-    currency: CURRENCY.code,
+    currency,
     maximumFractionDigits: compact ? 1 : 0,
     notation: compact ? "compact" : "standard",
-  }).format(value);
+  }).format(value * demoRates[currency]);
 }
 
 export function formatDate(iso: string) {

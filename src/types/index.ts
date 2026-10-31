@@ -83,6 +83,22 @@ export interface DemoPaymentFailure {
   status: "failed" | "resolved";
 }
 
+export interface DemoSupportTicket {
+  id: string;
+  customerId: string;
+  subject: string;
+  category: "Billing" | "Subscription" | "Account" | "Other";
+  priority: "Normal" | "High";
+  status: "Open" | "In progress" | "Resolved";
+  message: string;
+  response?: string;
+  createdAt: string;
+}
+
+export interface DemoAuditEvent { id: string; actor: string; action: string; at: string }
+export interface DemoAutomationSettings { renewalReminders: boolean; overdueFollowups: boolean; recoveryRetries: boolean }
+export type DemoCurrency = "INR" | "USD" | "EUR" | "GBP";
+
 export interface DemoProduct { id: string; name: string; price: number; category: string; variant?: string; variants?: string[]; archived?: boolean }
 export interface DemoQuotation { id: string; number: string; customerId: string; planId: string; items: { productId: string; variant?: string; quantity: number }[]; status: "draft" | "sent" | "accepted" | "rejected"; validUntil: string; subtotal?: number; total: number }
 export interface DemoQuotationTemplate { id: string; name: string; planId: string; productId: string; variant?: string; quantity: number; items?: { productId: string; variant?: string; quantity: number }[]; archived?: boolean }
@@ -95,6 +111,10 @@ export interface AppData {
   invoices: Invoice[];
   payments: Payment[];
   paymentFailures?: DemoPaymentFailure[];
+  supportTickets?: DemoSupportTicket[];
+  auditLogs?: DemoAuditEvent[];
+  automationSettings?: DemoAutomationSettings;
+  currency?: DemoCurrency;
   products?: DemoProduct[];
   quotations?: DemoQuotation[];
   quotationTemplates?: DemoQuotationTemplate[];

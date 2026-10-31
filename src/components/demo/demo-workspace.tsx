@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { formatMoney } from "@/lib/utils";
 import { useAppStore } from "@/store/app-store";
 import { DemoLineItems } from "@/components/demo/demo-line-items";
+import { SubscriptionCommandCenter } from "@/components/demo/subscription-command-center";
 import type { DemoProduct, DemoQuotation, Invoice, Plan, Subscription } from "@/types";
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -91,6 +92,16 @@ export function DemoWorkspace({ section: explicitSection }: { section?: string }
   }
 
   function dashboard() {
+    if (portal === "admin") return <SubscriptionCommandCenter data={data} onRetry={(failure) => {
+      const invoice = data.invoices.find((item) => item.id === failure.invoiceId);
+      if (!invoice || invoice.status === "paid") { toast.error("This invoice cannot be retried."); return; }
+      const paid = data.payments.filter((item) => item.invoiceId === invoice.id).reduce((sum, item) => sum + item.amount, 0);
+      const amount = Math.min(failure.amount, Math.max(0, invoice.total - paid));
+      if (!amount) { toast.error("The invoice has no remaining balance."); return; }
+      setData({ ...data, payments: [{ id: uid("pay"), invoiceId: invoice.id, customerId: invoice.customerId, method: "Card", amount, date: today(), note: "Successful local retry" }, ...data.payments], invoices: data.invoices.map((item) => item.id === invoice.id && paid + amount >= item.total ? { ...item, status: "paid" } : item), paymentFailures: (data.paymentFailures ?? []).map((item) => item.id === failure.id ? { ...item, status: "resolved" } : item) });
+      setRevision(revision + 1);
+      toast.success(`Payment retry recorded for ${invoice.number}.`);
+    }} />;
     return <div className="space-y-6"><header><h1 className="text-2xl font-semibold">{portal === "customer" ? "Welcome back" : portal === "staff" ? "My workspace" : "Dashboard"}</h1><p className="mt-1 text-sm text-muted-foreground">{user?.name} · live demo data saved in this browser</p></header>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{[
         [portal === "customer" ? "My subscriptions" : "Active subscriptions", visibleSubs.filter(x => x.status === "active").length],
