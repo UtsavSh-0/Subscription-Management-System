@@ -73,6 +73,16 @@ export interface Payment {
   note: string;
 }
 
+export interface DemoPaymentFailure {
+  id: string;
+  invoiceId: string;
+  customerId: string;
+  attemptedAt: string;
+  amount: number;
+  reason: string;
+  status: "failed" | "resolved";
+}
+
 export interface DemoProduct { id: string; name: string; price: number; category: string; variant?: string; variants?: string[]; archived?: boolean }
 export interface DemoQuotation { id: string; number: string; customerId: string; planId: string; items: { productId: string; variant?: string; quantity: number }[]; status: "draft" | "sent" | "accepted" | "rejected"; validUntil: string; subtotal?: number; total: number }
 export interface DemoQuotationTemplate { id: string; name: string; planId: string; productId: string; variant?: string; quantity: number; items?: { productId: string; variant?: string; quantity: number }[]; archived?: boolean }
@@ -84,6 +94,7 @@ export interface AppData {
   subscriptions: Subscription[];
   invoices: Invoice[];
   payments: Payment[];
+  paymentFailures?: DemoPaymentFailure[];
   products?: DemoProduct[];
   quotations?: DemoQuotation[];
   quotationTemplates?: DemoQuotationTemplate[];

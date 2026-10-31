@@ -60,7 +60,7 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onClose }: Props) {
                         title={collapsed ? item.label : undefined}
                         aria-current={active ? "page" : undefined}
                         className={cn(
-                          "flex h-9 items-center gap-3 rounded-md px-2.5 text-sm transition-colors",
+                          "flex h-9 items-center gap-3 rounded-md px-2.5 text-sm transition-colors hover:translate-x-0.5",
                           collapsed && "lg:justify-center lg:px-0",
                           active ? "bg-primary/10 font-medium text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground",
                         )}

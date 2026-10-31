@@ -23,7 +23,7 @@ const advancePeriod = (iso: string, period: Plan["period"]) => {
   return date.toISOString().slice(0, 10);
 };
 const uid = (prefix: string) => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
-const card = "rounded-xl border bg-card p-5 shadow-sm";
+const card = "app-surface rounded-xl border bg-card p-5 shadow-sm transition-shadow";
 const field = "w-full rounded-md border bg-background px-3 py-2 text-sm";
 const btn = "rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:opacity-90";
 const secondary = "rounded-md border px-3 py-2 text-sm hover:bg-muted";

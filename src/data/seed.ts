@@ -182,6 +182,15 @@ pending.forEach((inv, i) => {
 
 export const seedData: AppData = {
   customers, plans, subscriptions, invoices, payments,
+  paymentFailures: invoices.filter((invoice) => invoice.status === "confirmed").slice(0, 3).map((invoice, index) => ({
+    id: `failure-${index + 1}`,
+    invoiceId: invoice.id,
+    customerId: invoice.customerId,
+    attemptedAt: addDays(invoice.issueDate, 1),
+    amount: invoice.total,
+    reason: ["Card declined", "Bank authorization expired", "Insufficient funds"][index],
+    status: "failed" as const,
+  })),
   products: [
     { id: "prd-core", name: "Brightloop Core", category: "Software", price: 2499, variant: "Standard", variants: ["Standard", "Plus", "Enterprise"] },
     { id: "prd-analytics", name: "Analytics Suite", category: "Software", price: 999, variant: "Advanced" },
